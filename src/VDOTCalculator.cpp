@@ -27,9 +27,15 @@
 
 #include <QHeaderView>
 
+// For similar duration swimming WR are
+// 4 times shorter, on average.
+#define SWIM_DIST_FACTOR 4.0
+
 double
-VDOTCalculator::vdot(double mins, double vel)
+VDOTCalculator::vdot(double mins, double vel, bool isSwim)
 {
+    if (isSwim) vel *= SWIM_DIST_FACTOR; // ajust speed for swimming
+
     // estimated VO2 cost of running at vel speed in m/min
     double VO2 = -4.6 + 0.182258*vel + 0.000104*pow(vel, 2);
 
@@ -41,16 +47,18 @@ VDOTCalculator::vdot(double mins, double vel)
 }
 
 double
-VDOTCalculator::vVdot(double VDOT)
+VDOTCalculator::vVdot(double VDOT, bool isSwim)
 {
     // velocity at VO2max according to Daniels/Gilbert Formula
-    return 29.54 + 5.000663*VDOT - 0.007546*pow(VDOT, 2);
+    return (29.54 + 5.000663*VDOT - 0.007546*pow(VDOT, 2)) /
+           (isSwim ? SWIM_DIST_FACTOR : 1.0); // ajust speed for swimming
 }
 
 double
-VDOTCalculator::eqvTime(double VDOT, double dist)
+VDOTCalculator::eqvTime(double VDOT, double dist, bool isSwim)
 {
     // equivalent time for VDOT at dist, estimated by Newton-Raphson method
+    if (isSwim) dist *= SWIM_DIST_FACTOR; // ajust distance for swimming
     double t = dist/vVdot(VDOT)/0.9; // initial guess at TPace
     int iter = 100; // max iterations
     double f_t, fprime_t;

@@ -98,6 +98,7 @@ static struct {
 
     // VDOT functions
     { "vdottime", 2 }, // vdottime(VDOT, distance[km]) - result is seconds
+    { "svdottime", 2 }, // svdottime(VDOT, distance[m]) - result is seconds
 
     // add new ones above this line
     { "", -1 }
@@ -1999,6 +2000,15 @@ Result Leaf::eval(Context *context, DataFilter *df, Leaf *leaf, float x, RideIte
                     if (leaf->fparms.count() != 2) return Result(0);
 
                     return Result (60*VDOTCalculator::eqvTime(eval(context, df, leaf->fparms[0], x, m, p).number, 1000*eval(context, df, leaf->fparms[1], x, m, p).number));
+                }
+                break;
+
+        case 36 :
+                {   // SVDOTTIME (VDOT, distance[m])
+
+                    if (leaf->fparms.count() != 2) return Result(0);
+
+                    return Result (60*VDOTCalculator::eqvTime(eval(context, df, leaf->fparms[0], x, m, p).number, eval(context, df, leaf->fparms[1], x, m, p).number, true));
                 }
                 break;
 

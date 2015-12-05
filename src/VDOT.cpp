@@ -50,7 +50,7 @@ class VDOT : public RideMetric {
                  const QHash<QString,RideMetric*>&,
                  const Context*)
     {
-        if (!ride->isRun()) {
+        if (!ride->isRun() && !ride->isSwim()) {
             setValue(0.0);
             setCount(0);
             return;
@@ -65,12 +65,12 @@ class VDOT : public RideMetric {
         int iMax = std::min(rfc.meanMaxArray(RideFile::kph).size(), 14400);
         for (int i = 240; i < iMax; i++) {
             double vel = rfc.meanMaxArray(RideFile::kph)[i]*1000.0/60.0;
-            vdot = std::max(vdot, VDOTCalculator::vdot(i / 60.0, vel));
+            vdot = std::max(vdot, VDOTCalculator::vdot(i / 60.0, vel, ride->isSwim()));
         }
         setValue(vdot);
         setCount(1);
     }
-    bool isRelevantForRide(const RideItem *ride) const { return ride->isRun; }
+    bool isRelevantForRide(const RideItem *ride) const { return ride->isRun || ride->isSwim; }
     RideMetric *clone() const { return new VDOT(*this); }
 };
 
@@ -135,11 +135,73 @@ class TPace : public RideMetric {
     RideMetric *clone() const { return new TPace(*this); }
 };
 
+// Swim T-Pace
+class TPaceSwim : public RideMetric {
+    Q_DECLARE_TR_FUNCTIONS(TPace)
+    double tPace;
+
+    public:
+
+    TPaceSwim() : tPace(0.0)
+    {
+        setSymbol("TPaceSwim");
+        setInternalName("TPaceSwim");
+    }
+    // TPaceSwim ordering is reversed
+    bool isLowerBetter() const { return true; }
+    // Overrides to use Pace units setting
+    QString units(bool) const {
+        bool metricSwPace = appsettings->value(NULL, GC_SWIMPACE, true).toBool();
+        return RideMetric::units(metricSwPace);
+    }
+    double value(bool) const {
+        bool metricSwPace = appsettings->value(NULL, GC_SWIMPACE, true).toBool();
+        return RideMetric::value(metricSwPace);
+    }
+    QString toString(bool metric) const {
+        return time_to_string(value(metric)*60);
+    }
+    void initialize() {
+        setName(tr("TPace Swim"));
+        setType(RideMetric::Low);
+        setMetricUnits(tr("min/100m"));
+        setImperialUnits(tr("min/100yd"));
+        setPrecision(1);
+        setConversion(METERS_PER_YARD);
+    }
+    void compute(const RideFile* ride, const Zones*, int,
+                 const HrZones*, int,
+                 const QHash<QString,RideMetric*> &deps,
+                 const Context*) {
+        // TPaceSwim only makes sense for swimming
+        if (!ride->isSwim()) {
+            setValue(0.0);
+            setCount(0);
+            return;
+        }
+
+        assert(deps.contains("VDOT"));
+        VDOT *vdot = dynamic_cast<VDOT*>(deps.value("VDOT"));
+        assert(vdot);
+        // TPace corresponds to 90%vVDOT
+        if (vdot->value() > 0) {
+            tPace = 100.0/VDOTCalculator::vVdot(vdot->value(), true)/0.9;
+        } else {
+            tPace = 0.0;
+        }
+        setValue(tPace);
+        setCount(1);
+    }
+    bool isRelevantForRide(const RideItem *ride) const { return ride->isSwim; }
+    RideMetric *clone() const { return new TPaceSwim(*this); }
+};
+
 static bool added() {
     RideMetricFactory::instance().addMetric(VDOT());
     QVector<QString> deps;
     deps.append("VDOT");
     RideMetricFactory::instance().addMetric(TPace(), &deps);
+    RideMetricFactory::instance().addMetric(TPaceSwim(), &deps);
     return true;
 }
 
