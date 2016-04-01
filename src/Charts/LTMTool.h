@@ -167,7 +167,6 @@ class EditMetricDetailDialog : public QDialog
 
         void typeChanged();
         void bestName();
-        void stressName();
         void estimateName();
 
         void modelChanged();
@@ -229,6 +228,9 @@ class EditMetricDetailDialog : public QDialog
         void setButtonIcon(QColor);
 
         QList<RideFile::SeriesType> seriesList;
+
+        void stressDetails();
+
 };
 
 class DataFilterEdit : public QTextEdit

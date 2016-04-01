@@ -1870,6 +1870,14 @@ EditMetricDetailDialog::EditMetricDetailDialog(Context *context, LTMTool *ltmToo
     stressTypeSelect->addItem(tr("Long Term Stress  (LTS/CTL)"), STRESS_LTS);
     stressTypeSelect->addItem(tr("Stress Balance    (SB/TSB)"),  STRESS_SB);
     stressTypeSelect->addItem(tr("Stress Ramp Rate  (RR)"),      STRESS_RR);
+    stressTypeSelect->addItem(tr("Planned Short Term Stress (STS/ATL)"), STRESS_PLANNED_STS);
+    stressTypeSelect->addItem(tr("Planned Long Term Stress  (LTS/CTL)"), STRESS_PLANNED_LTS);
+    stressTypeSelect->addItem(tr("Planned Stress Balance    (SB/TSB)"),  STRESS_PLANNED_SB);
+    stressTypeSelect->addItem(tr("Planned Stress Ramp Rate  (RR)"),      STRESS_PLANNED_RR);
+    stressTypeSelect->addItem(tr("Expected Short Term Stress (STS/ATL)"), STRESS_EXPECTED_STS);
+    stressTypeSelect->addItem(tr("Expected Long Term Stress  (LTS/CTL)"), STRESS_EXPECTED_LTS);
+    stressTypeSelect->addItem(tr("Expected Stress Balance    (SB/TSB)"),  STRESS_EXPECTED_SB);
+    stressTypeSelect->addItem(tr("Expected Stress Ramp Rate  (RR)"),      STRESS_EXPECTED_RR);
     stressTypeSelect->setCurrentIndex(metricDetail->stressType);
 
     stressWidget = new QWidget(this);
@@ -2096,9 +2104,9 @@ EditMetricDetailDialog::EditMetricDetailDialog(Context *context, LTMTool *ltmToo
 
     // when stuff changes rebuild name
     connect(chooseBest, SIGNAL(toggled(bool)), this, SLOT(bestName()));
-    connect(chooseStress, SIGNAL(toggled(bool)), this, SLOT(stressName()));
+    connect(chooseStress, SIGNAL(toggled(bool)), this, SLOT(metricSelected()));
     connect(chooseEstimate, SIGNAL(toggled(bool)), this, SLOT(estimateName()));
-    connect(stressTypeSelect, SIGNAL(currentIndexChanged(int)), this, SLOT(stressName()));
+    connect(stressTypeSelect, SIGNAL(currentIndexChanged(int)), this, SLOT(metricSelected()));
     connect(chooseMetric, SIGNAL(toggled(bool)), this, SLOT(metricSelected()));
     connect(duration, SIGNAL(valueChanged(double)), this, SLOT(bestName()));
     connect(durationUnits, SIGNAL(currentIndexChanged(int)), this, SLOT(bestName()));
@@ -2166,7 +2174,7 @@ EditMetricDetailDialog::typeChanged()
 }
 
 void
-EditMetricDetailDialog::stressName()
+EditMetricDetailDialog::stressDetails()
 {
     // used when adding the generated curve to the curves
     // map in LTMPlot, we need to be able to differentiate
@@ -2181,12 +2189,79 @@ EditMetricDetailDialog::stressName()
 
     // append type
     switch(stressTypeSelect->currentIndex()) {
-    case 0: metricDetail->bestSymbol += "_lts"; break;
-    case 1: metricDetail->bestSymbol += "_sts"; break;
-    case 2: metricDetail->bestSymbol += "_sb"; break;
-    case 3: metricDetail->bestSymbol += "_rr"; break;
+    case STRESS_LTS:
+    case STRESS_PLANNED_LTS:
+    case STRESS_EXPECTED_LTS:
+        metricDetail->bestSymbol += "_lts";
+        metricDetail->penColor = QColor(Qt::blue);
+        metricDetail->curveStyle = QwtPlotCurve::Lines;
+        metricDetail->symbolStyle = QwtSymbol::NoSymbol;
+        metricDetail->smooth = false;
+        metricDetail->trendtype = 0;
+        metricDetail->topN = 1;
+        metricDetail->units = "Stress";
+        metricDetail->uunits = "Stress";
+        break;
+    case STRESS_STS:
+    case STRESS_PLANNED_STS:
+    case STRESS_EXPECTED_STS:
+        metricDetail->bestSymbol += "_sts";
+        metricDetail->penColor = QColor(Qt::magenta);
+        metricDetail->curveStyle = QwtPlotCurve::Lines;
+        metricDetail->symbolStyle = QwtSymbol::NoSymbol;
+        metricDetail->smooth = false;
+        metricDetail->trendtype = 0;
+        metricDetail->topN = 1;
+        metricDetail->units = "Stress";
+        metricDetail->uunits = "Stress";
+        break;
+    case STRESS_SB:
+    case STRESS_PLANNED_SB:
+    case STRESS_EXPECTED_SB:
+        metricDetail->bestSymbol += "_sb";
+        metricDetail->penColor = QColor(Qt::yellow);
+        metricDetail->curveStyle = QwtPlotCurve::Lines;
+        metricDetail->symbolStyle = QwtSymbol::NoSymbol;
+        metricDetail->smooth = false;
+        metricDetail->trendtype = 0;
+        metricDetail->topN = 1;
+        metricDetail->lowestN = 1;
+        metricDetail->units = "Stress";
+        metricDetail->uunits = "Stress";
+        metricDetail->fillCurve = true;
+        break;
+    case STRESS_RR:
+    case STRESS_PLANNED_RR:
+    case STRESS_EXPECTED_RR:
+        metricDetail->bestSymbol += "_rr";
+        metricDetail->penColor = QColor(Qt::darkGreen);
+        metricDetail->curveStyle = QwtPlotCurve::Lines;
+        metricDetail->symbolStyle = QwtSymbol::NoSymbol;
+        metricDetail->smooth = false;
+        metricDetail->trendtype = 0;
+        metricDetail->topN = 1;
+        metricDetail->units = "Ramp";
+        metricDetail->uunits = tr("Ramp");
+        break;
     }
 
+    // preppend planned/expected
+    switch(stressTypeSelect->currentIndex()) {
+    case STRESS_PLANNED_LTS:
+    case STRESS_PLANNED_STS:
+    case STRESS_PLANNED_SB:
+    case STRESS_PLANNED_RR:
+        metricDetail->bestSymbol = "planned_" + metricDetail->bestSymbol;
+        metricDetail->curveStyle = QwtPlotCurve::Sticks;
+        break;
+    case STRESS_EXPECTED_LTS:
+    case STRESS_EXPECTED_STS:
+    case STRESS_EXPECTED_SB:
+    case STRESS_EXPECTED_RR:
+        metricDetail->bestSymbol = "expected_" + metricDetail->bestSymbol;
+        metricDetail->curveStyle = QwtPlotCurve::Dots;
+        break;
+    }
 }
 
 void
@@ -2224,21 +2299,26 @@ EditMetricDetailDialog::metricSelected()
     // out of bounds !
     if (index < 0 || index >= ltmTool->metrics.count()) return;
 
-    userName->setText(ltmTool->metrics[index].uname);
-    userUnits->setText(ltmTool->metrics[index].uunits);
-    curveSmooth->setChecked(ltmTool->metrics[index].smooth);
-    fillCurve->setChecked(ltmTool->metrics[index].fillCurve);
-    labels->setChecked(ltmTool->metrics[index].labels);
-    stack->setChecked(ltmTool->metrics[index].stack);
-    showBest->setValue(ltmTool->metrics[index].topN);
-    showOut->setValue(ltmTool->metrics[index].topOut);
-    baseLine->setValue(ltmTool->metrics[index].baseline);
-    penColor = ltmTool->metrics[index].penColor;
-    trendType->setCurrentIndex(ltmTool->metrics[index].trendtype);
+    (*metricDetail) = ltmTool->metrics[index]; // overwrite!
+
+    // make the stress name & details
+    if (chooseStress->isChecked()) stressDetails();
+
+    userName->setText(metricDetail->uname);
+    userUnits->setText(metricDetail->uunits);
+    curveSmooth->setChecked(metricDetail->smooth);
+    fillCurve->setChecked(metricDetail->fillCurve);
+    labels->setChecked(metricDetail->labels);
+    stack->setChecked(metricDetail->stack);
+    showBest->setValue(metricDetail->topN);
+    showOut->setValue(metricDetail->topOut);
+    baseLine->setValue(metricDetail->baseline);
+    penColor = metricDetail->penColor;
+    trendType->setCurrentIndex(metricDetail->trendtype);
     setButtonIcon(penColor);
 
     // curve style
-    switch (ltmTool->metrics[index].curveStyle) {
+    switch (metricDetail->curveStyle) {
       
     case QwtPlotCurve::Steps:
         curveStyle->setCurrentIndex(0);
@@ -2257,7 +2337,7 @@ EditMetricDetailDialog::metricSelected()
     }
 
     // curveSymbol
-    switch (ltmTool->metrics[index].symbolStyle) {
+    switch (metricDetail->symbolStyle) {
       
     case QwtSymbol::NoSymbol:
         curveSymbol->setCurrentIndex(0);
@@ -2286,11 +2366,6 @@ EditMetricDetailDialog::metricSelected()
         break;
 
     }
-
-    (*metricDetail) = ltmTool->metrics[index]; // overwrite!
-
-    // make the stress name
-    if (chooseStress->isChecked()) stressName();
 }
 
 // uh. i hate enums when you need to modify from ints
