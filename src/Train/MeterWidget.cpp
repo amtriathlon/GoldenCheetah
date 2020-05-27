@@ -29,7 +29,7 @@ MeterWidget::MeterWidget(QString Name, QWidget *parent, QString Source) : QWidge
 {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground);
 #else

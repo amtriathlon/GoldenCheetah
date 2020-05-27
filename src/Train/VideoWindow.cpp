@@ -84,8 +84,6 @@ VideoWindow::VideoWindow(Context *context)  :
         libvlc_media_player_set_xwindow (mp, container->winId());
 #endif
 
-#if defined(WIN32) || defined(Q_OS_LINUX)
-
         // Read the video layouts just to list the names for the layout selector
         readVideoLayout(-1);
 
@@ -115,7 +113,6 @@ VideoWindow::VideoWindow(Context *context)  :
 
         // Instantiate a layout as initial default
         layoutChanged();
-#endif
     } else {
 
         // something went wrong !
