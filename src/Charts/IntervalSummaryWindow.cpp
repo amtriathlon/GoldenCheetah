@@ -128,6 +128,28 @@ static bool contains(const RideFile*ride, QList<IntervalItem*> intervals, int in
     return false;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief contains
+///        This function verify that a XDataSeries point is within the
+///        intervals boundaries.
+///
+/// \param[in] iXDataSeries XDataSeries from which the point originated.
+/// \param[in] iIntervals   Intervals' list.
+/// \param[in] iIndex       XDataPoint index.
+///
+/// \return A bool value indicating if the point is contained in the intervals.
+///////////////////////////////////////////////////////////////////////////////
+static bool contains(const XDataSeries *iXDataSeries, QList<IntervalItem *> iIntervals, int iIndex)
+{
+    foreach(IntervalItem *item, iIntervals) {
+        int start = iXDataSeries->timeIndex(item->start);
+        int end = iXDataSeries->timeIndex(item->stop);
+
+        if (iIndex >= start && iIndex <= end) return true;
+    }
+    return false;
+}
+
 QString IntervalSummaryWindow::summary(QList<IntervalItem*> intervals, QString &notincluding)
 {
     // need a current rideitem
@@ -208,6 +230,85 @@ QString IntervalSummaryWindow::summary(QList<IntervalItem*> intervals, QString &
         }
     }
 
+    // For concatenating intervals XData.
+    for (auto *xdataItr : context->ride->ride()->xdata())
+    {
+        // Selected intervals.
+        XDataPoint *xLast = nullptr;
+        timeOff=0;
+        distOff=0;
+
+        // Excluded intervals.
+        XDataPoint *xNotlast = nullptr;
+        nottimeOff=0;
+        notdistOff=0;
+
+        if (xdataItr == nullptr)
+            continue;
+
+        // Fake selected intervals XDataSeries.
+        XDataSeries* xd = new XDataSeries();
+
+        // Fake not included intervals XDataSeries.
+        XDataSeries* notXd = new XDataSeries();
+
+        xd->name = notXd->name = xdataItr->name;
+        xd->valuename = notXd->valuename = xdataItr->valuename;
+        xd->unitname = notXd->unitname = xdataItr->unitname;
+        xd->valuetype = notXd->valuetype = xdataItr->valuetype;
+
+        // Add XData series for selected intervals fake ride file.
+        f.addXData(xd->name, xd);
+
+        // Add XData series for excluded intervals fake ride file.
+        notf.addXData(notXd->name, notXd);
+
+        // Populate XData series data points.
+        for (int i = 0; i < xdataItr->datapoints.count(); i++)
+        {
+            XDataPoint *point = xdataItr->datapoints[i];
+
+            // Is in selected intervals.
+            if (contains(xdataItr, intervals, i))
+            {
+                // drag back time/distance for data not included below
+                if (xNotlast) {
+                    nottimeOff = point->secs - xNotlast->secs;
+                    notdistOff = point->km - xNotlast->km;
+                } else {
+                    nottimeOff = point->secs;
+                    notdistOff = point->km;
+                }
+
+                XDataPoint *pt = new XDataPoint(*point);
+                pt->secs = point->secs - timeOff;
+                pt->km = point->km - distOff;
+                xd->datapoints.append(pt);
+
+                xLast = xd->datapoints.last();
+            }
+            // Not in selected intervals.
+            else
+            {
+                // drag back time/distance for data not included above
+                if (xLast) {
+                    timeOff = point->secs - xLast->secs;
+                    distOff = point->km - xLast->km;
+                } else {
+                    timeOff = point->secs;
+                    distOff = point->km;
+                }
+
+                XDataPoint *pt = new XDataPoint(*point);
+                pt->secs = point->secs - nottimeOff;
+                pt->km = point->km - notdistOff;
+                notXd->datapoints.append(pt);
+
+                xNotlast = notXd->datapoints.last();
+            }
+        }
+    }
+
     QString s;
     if (appsettings->contains(GC_SETTINGS_INTERVAL_METRICS))
         s = appsettings->value(this, GC_SETTINGS_INTERVAL_METRICS).toString();
@@ -232,7 +333,7 @@ QString IntervalSummaryWindow::summary(QList<IntervalItem*> intervals, QString &
     notfake->setFrom(*const_cast<RideItem*>(context->currentRideItem()), true); // this wipes ride_ so put back
     notfake->ride_ = &notf;
     notfake->getWeight();
-    fake->intervals_.clear(); // don't accidentally wipe these!!!!
+    notfake->intervals_.clear(); // don't accidentally wipe these!!!!
     notfake->samples = notf.dataPoints().count() > 0;
     QHash<QString,RideMetricPtr> notmetrics = RideMetric::computeMetrics(notfake, Specification(), intervalMetrics);
 
