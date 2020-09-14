@@ -121,6 +121,57 @@ UserMetric::description() const
     return settings.description;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// \brief UserMetric::deps
+///        This method analyze the user metric fingerprint to find built-in
+///        dependencies.
+///
+/// \return The list of dependencies.
+///////////////////////////////////////////////////////////////////////////////
+QStringList UserMetric::deps() const
+{
+    QStringList wReturning;
+    bool instring=false;
+    bool innumber=false;
+    bool incomment=false;
+    bool insymbol=false;
+    int numberstart=0;
+    int symbolstart=0;
+
+    // Get metric factory instance.
+    const RideMetricFactory &factory = RideMetricFactory::instance();
+
+    // Parse the metric fingerprint.
+    QString string = settings.fingerprint;
+    for(int i = 0; i < string.length(); i++) {
+
+        // enter into symbol
+        if (!insymbol && !incomment && !instring && string[i].isLetter()) {
+            insymbol = true;
+            symbolstart = i;
+
+            // it starts with numbers but ends with letters - number becomes symbol
+            if (innumber) { symbolstart=numberstart; innumber=false; }
+        }
+
+        // end of symbol ?
+        if (insymbol && (!string[i].isLetterOrNumber() && string[i] != '_')) {
+
+            insymbol = false;
+            QString sym = string.mid(symbolstart, i-symbolstart);
+
+            // Get the real symbol name in the lookupMap.
+            QString wSymbol = rt->lookupMap.value(sym, "");
+
+            // Check it is part of the metric factory.
+            if ((wSymbol.isEmpty() == false) && factory.haveMetric(wSymbol)) {
+                wReturning << wSymbol;
+            }
+        }
+    }
+    return wReturning;
+}
+
 RideMetric::MetricType
 UserMetric::type() const
 {

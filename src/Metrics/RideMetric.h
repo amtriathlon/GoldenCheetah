@@ -283,6 +283,7 @@ public:
     QString name() const; 
     QString internalName() const; 
     QString description() const;
+    QStringList deps() const;
 
     // Long term metrics charts
     RideMetric::MetricType type() const; 

@@ -95,7 +95,9 @@ RideCache::RideCache(Context *context) : context(context)
 
             // now add initial metrics
             foreach(UserMetricSettings m, _userMetrics) {
-                RideMetricFactory::instance().addMetric(UserMetric(context, m));
+                UserMetric metricToAdd = UserMetric(context, m);
+                QVector<QString> deps = metricToAdd.deps().toVector();
+                RideMetricFactory::instance().addMetric(metricToAdd, deps.count() ? &deps : nullptr);
             }
         }
 

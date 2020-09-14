@@ -122,7 +122,9 @@ GlobalContext::userMetricsConfigChanged()
 
         // now add user metrics
         foreach(UserMetricSettings m, _userMetrics) {
-            RideMetricFactory::instance().addMetric(UserMetric(_contexts.at(0), m));
+            UserMetric metricToAdd = UserMetric(_contexts.at(0), m);
+            QVector<QString> deps = metricToAdd.deps().toVector();
+            RideMetricFactory::instance().addMetric(metricToAdd, deps.count() ? &deps : nullptr);
         }
     }
 }
