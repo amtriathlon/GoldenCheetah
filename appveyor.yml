@@ -6,9 +6,9 @@ version: ci.{build}
 clone_depth: 1
 skip_tags: true
 image:
-  - Visual Studio 2019
+#  - Visual Studio 2019
   - macos-monterey
-  - Ubuntu2204
+#  - Ubuntu2204
 
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
@@ -161,14 +161,13 @@ install:
       # Setup Qt 6.8.3
       if [ -z "$(ls -A Qt)" ]; then
         mkdir -p Qt
-        pip install -U pip
-        pip install aqtinstall
+        brew install aqtinstall
         cd Qt
         aqt install-qt mac desktop 6.8.3 clang_64 -m  qt5compat qtcharts qtconnectivity qtmultimedia qtpositioning qtsensors qtserialport qtwebchannel qtwebengine
         cd ..
       fi
       export QTDIR=$APPVEYOR_BUILD_FOLDER/Qt/6.8.3/macos
-      export PATH=$QTDIR/bin:$HOME/Qt/6.5/macos/bin:$PATH
+      export PATH=$QTDIR/bin:$PATH
       qmake --version
       # Setup Xcode 14.2
       sudo xcode-select -s /Applications/Xcode-14.2.0.app
