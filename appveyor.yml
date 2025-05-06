@@ -63,24 +63,6 @@ init:
 # Setup NSIS
 - cmd: set PATH=%PATH%;C:\"Program Files (x86)"\NSIS
 
-# Linux / macOS
-- sh: >-
-    if $CI_LINUX; then
-      export OS_NAME=linux
-      # Setup QT 5.15
-      export QTDIR=$HOME/Qt/5.15/gcc_64
-      export PATH=$HOME/Qt/5.15/gcc_64/bin:$PATH
-      qmake --version
-    else
-      export OS_NAME=macos
-      # Setup QT 6.5
-      export QTDIR=$HOME/Qt/6.5/macos
-      export PATH=$HOME/Qt/6.5/macos/bin:$PATH
-      qmake --version
-      # Setup Xcode 14.2
-      sudo xcode-select -s /Applications/Xcode-14.2.0.app
-    fi
-
 cache:
 - gc-ci-libs.zip -> appveyor.yml
 - jom_1_1_3.zip
@@ -92,6 +74,7 @@ cache:
 - srmio -> appveyor.yml
 - D2XX
 - site-packages
+- Qt
 
 install:
 
@@ -158,6 +141,38 @@ install:
 - cmd: echo GSL_LIBS=-Lc:\tools\vcpkg\installed\x64-windows\lib -lgsl -lgslcblas >> src\gcconfig.pri
 
 # Linux / macOS
+- sh: >-
+    if $CI_LINUX; then
+      export OS_NAME=linux
+      # Setup Qt 6.8.3
+      if [ -z "$(ls -A Qt)" ]; then
+        mkdir -p Qt
+        pip install -U pip
+        pip install aqtinstall
+        cd Qt
+        aqt install-qt linux desktop 6.8.3 linux_gcc_64 -m  qt5compat qtcharts qtconnectivity qtmultimedia qtpositioning qtsensors qtserialport qtwebchannel qtwebengine
+        cd ..
+      fi
+      export QTDIR=$APPVEYOR_BUILD_FOLDER/Qt/6.8.3/gcc_64
+      export PATH=$QTDIR/bin:$PATH
+      qmake --version
+    else
+      export OS_NAME=macos
+      # Setup Qt 6.8.3
+      if [ -z "$(ls -A Qt)" ]; then
+        mkdir -p Qt
+        pip install -U pip
+        pip install aqtinstall
+        cd Qt
+        aqt install-qt mac desktop 6.8.3 clang_64 -m  qt5compat qtcharts qtconnectivity qtmultimedia qtpositioning qtsensors qtserialport qtwebchannel qtwebengine
+        cd ..
+      fi
+      export QTDIR=$APPVEYOR_BUILD_FOLDER/Qt/6.8.3/macos
+      export PATH=$QTDIR/bin:$HOME/Qt/6.5/macos/bin:$PATH
+      qmake --version
+      # Setup Xcode 14.2
+      sudo xcode-select -s /Applications/Xcode-14.2.0.app
+    fi
 - sh: bash appveyor/$OS_NAME/install.sh
 
 before_build:
