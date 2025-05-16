@@ -2,8 +2,8 @@ version: ci.{build}
 clone_depth: 1
 skip_tags: true
 image:
-  - Visual Studio 2019
-  - macos-monterey
+#  - Visual Studio 2019
+#  - macos-monterey
   - Ubuntu2204
 
 environment:
@@ -67,6 +67,11 @@ init:
       export QTDIR=$HOME/Qt/5.15/gcc_64
       export PATH=$QTDIR/bin:$PATH
       qmake --version
+      # Use gcc 11.4
+      export CC=gcc-11
+      export CXX=g++-11
+      export QMAKE_CC=gcc-11
+      export QMAKE_CXX=g++-11
     else
       export OS_NAME=macos
       # Setup QT 6.5
