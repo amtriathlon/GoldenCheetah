@@ -6,9 +6,9 @@ branches:
     - master
 
 image:
-  - Visual Studio 2019
-  - macos-monterey
-  - Ubuntu2204
+#  - Visual Studio 2019
+#  - macos-monterey
+  - Previous Ubuntu2204
 
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
@@ -67,8 +67,9 @@ init:
 - sh: >-
     if $CI_LINUX; then
       export OS_NAME=linux
-      # Setup QT 5.15
-      export QTDIR=$HOME/Qt/5.15/gcc_64
+      # Setup QT 6.7
+      ls -l $HOME/Qt
+      export QTDIR=$HOME/Qt/6.7/gcc_64
       export PATH=$QTDIR/bin:$PATH
       qmake --version
     else
