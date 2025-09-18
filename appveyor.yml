@@ -6,7 +6,7 @@ branches:
     - master
 
 image:
-#  - Previous Visual Studio 2019
+  - Visual Studio 2022
 #  - macos-monterey
   - Ubuntu2204
 
@@ -54,12 +54,12 @@ environment:
 init:
 
 # Windows
-# Setup QT 5.15 - 64Bit
-- cmd: set QTDIR=C:\Qt\5.15\msvc2019_64
+# Setup QT 6.8 - 64Bit
+- cmd: set QTDIR=C:\Qt\6.8\msvc2022_64
 - cmd: set PATH=%QTDIR%\bin;%PATH%
 - cmd: qmake --version
-# Setup MSVC - VS 2019
-- cmd: call c:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat amd64
+# Setup MSVC - VS 2022
+- cmd: call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 # Setup NSIS
 - cmd: set PATH=%PATH%;C:\"Program Files (x86)"\NSIS
 
@@ -87,7 +87,7 @@ cache:
 - jom_1_1_3.zip
 - sip-4.19.8 -> appveyor.yml
 - C:\R
-- C:\Python -> src\Python\requirements.txt
+#- C:\Python -> src\Python\requirements.txt
 - c:\tools\vcpkg\installed\
 - qwt -> qwt/qwtconfig.pri.in, appveyor.yml
 - srmio -> appveyor.yml
@@ -126,33 +126,33 @@ install:
 - cmd: echo DEFINES+=GC_WANT_R >> src\gcconfig.pri
 
 # Get Python embeddable and install packages
-- ps: >-
-    if ($isWindows -And -not (Test-Path 'C:\Python')) {
-      Start-FileDownload "https://www.python.org/ftp/python/3.7.9/python-3.7.9-embed-amd64.zip" Python.zip
-      7z x Python.zip -oC:\Python\
-      echo python37.zip . '' 'import site' | Out-File C:\Python\python37._pth -Encoding ascii
-      mkdir C:\Python\lib\site-packages
-      c:\python37-x64\python -m pip install --upgrade pip
-      c:\python37-x64\python -m pip install -r src\Python\requirements.txt -t C:\Python\lib\site-packages
-    }
+#- ps: >-
+#    if ($isWindows -And -not (Test-Path 'C:\Python')) {
+#      Start-FileDownload "https://www.python.org/ftp/python/3.7.9/python-3.7.9-embed-amd64.zip" Python.zip
+#      7z x Python.zip -oC:\Python\
+#      echo python37.zip . '' 'import site' | Out-File C:\Python\python37._pth -Encoding ascii
+#      mkdir C:\Python\lib\site-packages
+#      c:\python37-x64\python -m pip install --upgrade pip
+#      c:\python37-x64\python -m pip install -r src\Python\requirements.txt -t C:\Python\lib\site-packages
+#    }
 
 # Get SIP and and install on Python
-- ps: >-
-    if ($isWindows -And -not (Test-Path 'sip-4.19.8')) {
-      Start-FileDownload "https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.8/sip-4.19.8.zip"
-        7z x sip-4.19.8.zip
-        cd sip-4.19.8
-        c:\python37-x64\python --version
-        c:\python37-x64\python configure.py
-        jom -j2
-        cd ..
-    }
-- cmd: cd sip-4.19.8 & nmake install & cd ..
+#- ps: >-
+#    if ($isWindows -And -not (Test-Path 'sip-4.19.8')) {
+#      Start-FileDownload "https://sourceforge.net/projects/pyqt/files/sip/sip-4.19.8/sip-4.19.8.zip"
+#        7z x sip-4.19.8.zip
+#        cd sip-4.19.8
+#        c:\python37-x64\python --version
+#        c:\python37-x64\python configure.py
+#        jom -j2
+#        cd ..
+#    }
+#- cmd: cd sip-4.19.8 & nmake install & cd ..
 
 # Add Python (avoiding collision between GC Context.h and Python context.h)
-- cmd: echo DEFINES+=GC_WANT_PYTHON >> src\gcconfig.pri
-- cmd: echo PYTHONINCLUDES=-ICore -I\"c:\python37-x64\include\" >> src\gcconfig.pri
-- cmd: echo PYTHONLIBS=-L\"c:\python37-x64\libs\" -lpython37 >> src\gcconfig.pri
+#- cmd: echo DEFINES+=GC_WANT_PYTHON >> src\gcconfig.pri
+#- cmd: echo PYTHONINCLUDES=-ICore -I\"c:\python37-x64\include\" >> src\gcconfig.pri
+#- cmd: echo PYTHONLIBS=-L\"c:\python37-x64\libs\" -lpython37 >> src\gcconfig.pri
 
 # GSL
 - cmd: echo GSL_INCLUDES=c:\tools\vcpkg\installed\x64-windows\include >> src\gcconfig.pri
