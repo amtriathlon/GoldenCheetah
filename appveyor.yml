@@ -54,8 +54,8 @@ environment:
 init:
 
 # Windows
-# Setup QT 6.8 - 64Bit
-- cmd: set QTDIR=C:\Qt\6.8\msvc2022_64
+# Setup QT 6.9 - 64Bit
+- cmd: set QTDIR=C:\Qt\6.9\msvc2022_64
 - cmd: set PATH=%QTDIR%\bin;%PATH%
 - cmd: qmake --version
 # Setup MSVC - VS 2022
