@@ -6,9 +6,9 @@ branches:
     - master
 
 image:
-  - macos-monterey
+#  - macos-monterey
   - Ubuntu2204
-  - Visual Studio 2019
+#  - Visual Studio 2019
 
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
@@ -72,6 +72,11 @@ init:
 - sh: >-
     if $CI_LINUX; then
       export OS_NAME=linux
+      gcc --version
+      g++ --version
+      sudo update-alternatives --set gcc "/usr/bin/gcc-11"
+      gcc --version
+      g++ --version
       # Setup QT 6.8
       export QTDIR=$HOME/Qt/6.8
       export LD_LIBRARY_PATH=$QTDIR:$LD_LIBRARY_PATH
