@@ -6,8 +6,8 @@ branches:
     - master
 
 image:
-  - Visual Studio 2022
-  - Ubuntu2204
+#  - Visual Studio 2022
+#  - Ubuntu2204
   - macos-sonoma
 
 environment:

@@ -2,6 +2,16 @@
 set -ev
 
 date
+
+# Setup QT 6.8.3
+python3.12 -m venv aqtinstall
+aqtinstall/bin/pip install -U pip
+aqtinstall/bin/pip install aqtinstall
+sudo aqtinstall/bin/aqt install-qt mac desktop 6.8.3 clang_64 -O $HOME/Qt -m  qt5compat qtcharts qtconnectivity qtmultimedia qtpositioning qtsensors qtserialport qtwebchannel qtwebengine
+export QTDIR=$HOME/Qt/6.8.3/macos
+export PATH=$QTDIR/bin:$PATH
+qmake --version
+
 # Don't update or cleanup
 export HOMEBREW_NO_AUTO_UPDATE=1
 export HOMEBREW_NO_INSTALL_CLEANUP=1
