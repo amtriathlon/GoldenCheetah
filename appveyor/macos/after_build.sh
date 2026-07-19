@@ -381,7 +381,7 @@ codesign --force --deep --sign - GoldenCheetah.app
 
 echo "Creating dmg file..."
 # Manually create DMG since we removed -dmg from macdeployqt
-hdiutil create -volname GoldenCheetah -srcfolder GoldenCheetah.app -ov -format UDZO GoldenCheetah.dmg
+hdiutil create -volname GoldenCheetah -srcfolder GoldenCheetah.app -ov -format UDBZ GoldenCheetah.dmg
 
 echo "Renaming dmg file to branch and build number ready for deploy"
 mv GoldenCheetah.dmg ../GoldenCheetah_v3.8_x64.dmg
